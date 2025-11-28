@@ -1,9 +1,7 @@
 import numpy as np
-import tensorflow as tf
-import random 
-import math 
+import random
 
-# no need tensorflow
+
 class exRep:
 
     def __init__(self, M, width, height):

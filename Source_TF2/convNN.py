@@ -1,8 +1,5 @@
 import tensorflow as tf
-import numpy as np
-import math
 
-# Disable TF2 behavior and use TF1 compatibility mode
 tf.compat.v1.disable_eager_execution()
 
 
