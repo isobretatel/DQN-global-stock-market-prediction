@@ -17,7 +17,7 @@ NumAction = 3
 W = 32  # Image size
 
 # Training hyperparameters
-maxiter = 500000        # iterations (paper uses 5M)
+maxiter = 100000        # iterations (paper uses 5M)
 learning_rate = 0.00001
 epsilon_min = 0.1
 M = 1000                # memory buffer capacity
