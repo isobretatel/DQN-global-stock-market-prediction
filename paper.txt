@@ -1,0 +1,606 @@
+ABSTRACT Weapplied Deep Q-Network with a Convolutional Neural Network function approximator,
+ which takes stock chart images as input for making global stock market predictions. Our model not only
+ yields profit in the stock market of the country whose data was used for training our model but also generally
+ yields profit in global stock markets. We trained our model only on US stock market data and tested it on the
+ stock market data of 31 different countries over 12 years. The portfolios constructed based on our model’s
+ output generally yield about 0.1 to 1.0 percent return per transaction prior to transaction costs in the stock
+ markets of 31 countries. The results show that some patterns in stock chart images indicate the same stock
+ price movements across global stock markets. Moreover, the results show that future stock prices can be
+ predicted even if the model is trained and tested on data from different countries. The model can be trained
+ on the data of relatively large and liquid markets (e.g., US) and tested on the data of small markets. The
+ results demonstrate that artificial intelligence based stock price forecasting models can be used in relatively
+ small markets (emerging countries) even though small markets do not have a sufficient amount of data for
+ training
+ 
+  III. METHOD
+ A. OVERVIEW
+ In this subsection, a brief overview of our model is provided.
+ Fig. 1 illustrates how our CNN reads input and outputs action
+ values for an individual company. The term action value
+ refers to the expected cumulative rewards of an action. Fig. 1
+ (a) shows the architecture of our CNN. Fig. 1 (b) illustrates
+ example of a W by W chart image at time t and time
+ t +1. For example, if W equals 8 as shown in this figure,
+ our CNN reads input as an 8 by 8 matrix with all elements
+ f
+ illed with 0 or 1. A single column in this matrix represents a
+ single day. Elements filled with the color black corresponds
+ to 1; otherwise, they are all 0. The top part of the matrix
+ represents the relative value of the closing price and the
+ lower half represents the relative value of the volume. Two
+ rows in the middle of the chart are empty (has zero value)
+ to help our CNN to distinguish price from volume. Fig. 1
+ (c) shows sequential chart of 39 consecutive days. In this
+ f
+ igure, all price volume data are min-max normalized over
+ 39 days for visualization. In other words, for price data, the
+ highest price in 39 days is listed in the first row, and the
+ lowest price is provided in the third row; however, this is
+ only for visualization purposes. In our actual experiments,
+ input data are min-max normalized over W days (horizontal
+ size of chart), and are not min-max normalized over the entire
+ experimental period.
+ As shown in Fig. 1, our CNN takes a W by W chart
+ image as input at each time step t, which shows the daily
+ closing price and volume data of a single company over the
+ last W days. At time t, our CNN outputs two vectors with a
+ length of 3: and .Basedonthesevectors,the action (Long,
+ Neutral, or Short) to take at time t is decided. Likewise, at
+ 
+  time t+1(or the next day), our CNN in Fig. 1 reads a stock
+ chart image at time t + 1 and decides which action to take
+ at time t +1. The action value vector represents an action
+ value which is the expected cumulative rewards of an action
+ (Long, Neutral, or Short). One hot vector is marked as 1
+ in the same index where has the maximum action value;
+ otherwise, it is marked as 0. Each element of the vectors
+ represents Long, Neutral, or Short action respectively. Thus,
+ for example, the value of [3] at time t denotes the expected
+ cumulative rewards if our CNN takes the Short action at time
+ t. For simplicity, we standardized the index of all vectors in
+ this paper to start from one. To sum up, the way in which
+ our CNN operates is simple. It reads a chart at time t and
+ chooses the action which has the maximum action value. At
+ time t + 1, it receives reward based on the action at time t
+ and the price change from time t to t + 1. It takes action at
+ time t +1 in the same way it does at time t.
+ B. NETWORKARCHITECTURE
+ Our CNN takes 32 32 1 as input. The input has only 1
+ channel because it does not need to be colored. The exact
+ architecture of our CNN is as follows. Our CNN has six
+ hidden layers. Thereby, H equals 6 in Fig. 1 (a). The first four
+ hidden layers are convolutional layers followed by a Rectifier
+ non-Linearity Unit (ReLU) and the last two hidden layers are
+ FC layers. In the FC layers, ReLU is implemented only after
+ the fifth layer. Each of the first four hidden layers consists
+ of 16 filters of size 5 5 1, 16 filters of size 5 5 16,
+ 32 filters of size 5 5 16, and 32 filters of size 5 5 32,
+ respectively, all with stride 1, zero padding and followed by
+ ReLU. Right after the second and fourth hidden layers, a
+ max-pooling layer with a 2 2 filter and stride 2 is applied.
+ The last two hidden layers are FC layers with 2048 32 and
+ 32 3parameters, respectively, followed by ReLU except for
+ the final layer. The batch normalization [35] layer is added in
+ every layer right before ReLU. The parameters are initialized
+ using Xavier initialization [36]. The softmax function is not
+ implemented since the output of our CNN is an action value,
+ not a probability distribution between 0 and 1.
+ C. DATA DESCRIPTION
+ Wecollected daily closing price and volume data from Yahoo
+ Finance. But Yahoo Finance does not provide the list of
+ companies that can be download from the web site, we ob
+tained the list of companies of roughly 40 countries including
+ most of the developed markets from http://investexcel.net/all
+yahoo-finance-stock-tickers/. Only for US, we used the list of
+ companies of Russell 3000 index (The first half of 2018). We
+ downloaded the adjusted closing price data to reflect events
+ such as stock splits. Countries that did not have enough valid
+ data were excluded. The data of 30 countries collected over
+ 12 years and data of one country (US) collected over 17
+ years were downloaded. In each country, we also eliminated
+ companies with noisy data. First, we eliminated companies
+ that had no price data. Second, we also eliminated companies
+ that had an excessive number of days with zero volume (we
+ eliminated the companies that had zero volume for more than
+ 25% of the entire testing period). Strictly speaking, many
+ days of zero volume may not be considered as noise because
+ a company’s stocks may not be traded on some days or in
+ some cases, stocks may be suspended for trading for a certain
+ period. But stocks that have been suspended for more than
+ 25% of the entire testing period are definitely abnormal, and
+ mayindicate that the data of the given company is erroneous.
+ Thus, excluding such companies does not undermine the
+ validity of our work.
+ After downloading and eliminating noisy data, the entire
+ dataset is divided into the training set and test set. The
+ training set contains only US market data collected over
+ a five-year period (Jan.2001-Dec.2005) from approximately
+ 1500 companies that are included in the Russell 3000 Index
+ (The first half of 2018). Only about half of the companies
+ listed in the Russel 3000 index in the first half of 2018 had
+ data from Jan. 2001 to Dec. 2005. Approximately 80% of the
+ training set is actually used for training our model and about
+ 20% is used for optimizing the hyperparameters. The test set
+ contains data from 31 countries including the US, which was
+ collected over a 12-year period (Jan.2006-Dec.2017). The
+ test set is further divided into four-year intervals as follows:
+ (2006-2010), (2010-2014), (2014-2018). Every four years,
+ the top liquid N companies are selected from each country
+ for the experiment. Values of 3000, 500, and 100 are initially
+ assigned to N for US, developed countries, and emerging
+ countries, respectively. The values are selected based on
+ market capitalization and the number of available companies
+ in each country. All the available companies were used if the
+ number of valid companies were less than initial N value. In
+ further experiments, we also tested our model on the data of
+ the most liquid NL companies from each country. Values of
+ 1000, 200, and 40 are assigned to NL for the US, developed
+ countries, and emerging countries, respectively. The top N
+ and NL liquid companies are selected every four years based
+ on the data collected over last 30 business days prior to the
+ f
+ irst day in each test set. For example, the top N and NL
+ liquid companies from Jan.2006 to Dec. 2009 were selected
+ based on data collected from Nov. 15, 2005 to Dec. 31, 2005.
+ Not all companies have all 12 years of data. The companies
+ listed in Jan. 2010 have data starting from Jan. 2010. So
+ companies that were listed in the exchange market for the
+ entire four-year period were used for that testing period.
+ In other words, all companies used in the testing period
+ (Jan.2006-Dec.2009) were listed before Jan.2006 (strictly
+ speaking, Nov. 15, 2005) and were still listed in the exchange
+ market after Dec.2009.
+ In our experiments, we used daily closing price and vol
+umedatadownloadedfromYahooFinance,andweconverted
+ the raw data to input data as follows. A single input (corre
+sponds to a single day of one company) consists of two parts:
+ input chart Sc
+ t and scalar value Lc
+ t. The superscript c and
+ subscript t indicate company c and time t, respectively. The
+ input chart Sc
+ t is a W by W matrix in which all elements
+ are either 0 or 1. The W by W matrixconsists of the last W
+ 
+  daysofclosingpriceandvolumedataofasinglecompany.
+ Forexample,theinputchartofcompanycattimetcontains
+ closingpriceandvolumedatafromtimet W+1totime
+ tofcompanyc.Likementionedearlier,whenclosingprice
+ andvolumeareincludedinachart,thevaluesofclosingprice
+ andvolumearemin-maxnormalizedoverlastWdays.The
+ scalar valueLc
+ t represents thepricechange inpercentage
+ fromtimettotimet+1. Inotherwords,Lc
+ t issimplythe
+ dailyreturnofcompanycfromtimettotimet+1.InFig.
+ 1,chartSc
+ t isshownastheonlyinput toourCNNbecause
+ thescalarvalueLc
+ t isusedwithourCNNoutputtocalculate
+ reward.But in theactual trainingand test procedure, our
+ CNNreceivesaWbyWmatrixofcompanycontimetas
+ inputSc
+ t andoutputsanactionbasedonSc
+ t.Therewardfor
+ thisactioniscalculatedusingthescalarvalueLc
+ t.Equation
+ (1)calculatesLc
+ twherePrcc
+ t indicatestheclosingpriceof
+ companycattimet.
+ Lc
+ t=100 (Prcc
+ t+1 Prcc
+ t)Prcc
+ t (1)
+ WhilegeneratingLc
+ t,weapplied twosimplemethods for
+ training ourmodel. First, we bounded the values ofLc
+ t
+ between-20%and20%toprevent excessiverewards from
+ noisydata. Thoughwe tried to remove noisydata, there
+ maystillbesomenoisydata.Since(1)involvesdivision,the
+ valueofLc
+ t caneasilychangewhenanextremelysmallor
+ potentiallyincorrectvalueisassignedtotheclosingprice.By
+ boundingthevaluesofLc
+ t,wecouldminimize the impact
+ of suchundesirablecases. Inaddition,weconductedmore
+ experimentswithless tightbounds (50%, 100%)but there
+ wasnonotablechangeintheresults.Second,forthetraining
+ set (not the test set),weneutralizedthedailyreturnLc
+ t to
+ addressthedataimbalanceproblem.Inotherwords,thedaily
+ returnaveragedovertheentiretrainingsetissubtractedfrom
+ eachdailyreturnLc
+ t. Ifwesamplestockmarketdatafora
+ longperiod, thedatausuallybecomes imbalancedbecause
+ themarket tends togoup. So thedatausuallyhasmore
+ positivevaluesthannegativevalues.Althoughthedegreeof
+ imbalance in thestockmarket data isnot that significant,
+ wefoundthatneutralizingtheimbalanceimprovesourtrain
+ingprocess.Table1summarizes theinformationabout the
+ dataset used inour experiments.Thenumber of available
+ companiesfromeachcountryislistedincolumnCom#.The
+ number of companies actuallyused inour experiments is
+ listedincolumnsNandNL.Thetotalnumberofdatausedin
+ ourexperimentsislistedincolumnData#.ThecolumnAvg
+ liststheaveragedailyreturn(inpercentage)of thebuyand
+ holdportfoliosofagivenperiod.Asshowninthefirstrowof
+ Table1,thereturnaverageofthetrainingsetis0becausewe
+ neutralizedthetrainingset.ThecolumnStdliststhestandard
+ deviationsofdailyreturns.ThecolumnExcessRateliststhe
+ percentageof datawith the absolutevalueofLc
+ t,which
+ originallyhadavaluelargerthan20%beforebounding.
+ Ourtrainingandtestsetsareintheformofamatrix.For
+ example, the training set consists ofN T datapoints
+ whereNis 1500andTis 1000(numberofbusinessdays
+ infouryearswhichis80%ofentiretrainingset).Thetestset
+ isformattedinthesamewaywithdifferentvaluesofNand
+ T.
+ D. TRAININGPROCESS
+ Algorithm1Trainingalgorithm
+ 1: InitializememorybuffertocapacityM
+ 2: Initializenetworkparameters
+ 3: Initializetargetnetworkparameters =
+ 4: Initialize =1
+ 5: forall b=1,maxiter do
+ 6: c randomlychosenindex
+ 7: t randomlychosenindex
+ 8: Withprobability ,ac
+ t 1 randomaction
+ 9: otherwiseac
+ t 1 maxa
+ Q(sc
+ t 1 a; )
+ 10: Withprobability ,ac
+ t randomaction
+ 11: otherwiseac
+ t maxa
+ Q(sc
+ t a; )
+ 12: S sc
+ t
+ 13: A ac
+ t
+ 14: R ac
+ t Lc
+ t-P |ac
+ t-ac
+ t 1|
+ 15: S’ sc
+ t+1
+ 16: Seteb S,A,R,S’
+ 17: Storeexperienceebinmemorybuffer
+ 18: if >m then
+ 19: 0999999
+ 20: endif
+ 21: ifMemorybufferisfull then
+ 22: Delete the oldest experience from thememory
+ buffer
+ 23: endif
+ 24: ifb%B==0then
+ 25: Randomsampleminibatchofsize frommemory
+ buffer
+ 26: Loss 0
+ 27: forall kinminibatch do
+ 28: SetSkAkRkSk fromek
+ 29: Loss Loss+[Rk+ maxa
+ Q(Sk a; )
+ Q(SkAk; )]2
+ 30: endfor
+ 31: Loss Loss
+ 32: PerformgradientsteptominimizeLosswithrespect
+ totheparameters
+ 33: endif
+ 34: if b%(B C)==0then
+ 35:
+ 36: endif
+ 37: endfor
+ ThestandardQ-learningalgorithmisbasedontheBellman
+ equation, and iterativelyupdates itsactionvaluebasedon
+ the assumption that if an actionvalue is optimal then it
+ satisfiestheBellmanequation.TheBellmanequationdefines
+ the relationshipbetween thecurrent actionvalueQ(sa)
+ andthesubsequentactionvalueQ(s a).Thelossfunction
+ is derived fromthis equation. Our training process uses
+ 
+  the following two methods of DQN: experience replay and
+ parameter freezing. Our loss function is defined in (2). We
+ use the Adam optimizer [37] to perform a gradient step on
+ Loss( ) with respect to parameters . For better under
+standing, the batch size is omitted in (2) so the loss function
+ can beinterpreted as loss calculated from a single experience.
+ Loss( ) = [r +max
+ a
+ Q(s a; ) Q(sa; )]2 (2)
+ where s, a, r, s, and a refer to current state, action, reward,
+ subsequent state, and subsequent action, respectively, and 
+denotes the discount factor. New symbols are used to main
+tain consistency with the standard Q-learning algorithm used
+ in previous works. In Fig. 1, input chart and output action
+ at time t correspond to state s and action a, respectively.
+ Likewise, input chart and output action at time t + 1 also
+ refer to subsequent state s and action a, respectively. As
+ mentioned earlier, output in Fig. 1, which is the output of
+ our CNN, is the action value vector of each element which
+ corresponds to each Long, Neutral, or Short action. The term
+ Q(sa; ) is a scalar value that represents the action value
+ of action a given state s using our CNN parameterized by
+ . Thus, given state s, if action a is Short, then Q(sa; )
+ exactly corresponds to output [3] from our CNN parameter
+ized by .Here, the network parameters and target network
+ parameters 
+are maintained throughout the training process
+ to implement the parameter freezing method. Both and 
+are randomly initialized with the same value in the beginning
+ of the training stage. In the original version of the parameter
+ freezing method, the optimizer performs a gradient step on
+ Loss( ) with respect to the network parameters at every
+ iteration, and no gradient step is performed with respect to the
+ target network parameters . Target network parameters 
+are only updated at every C iteration by copying parameters
+ to 
+.
+ Although our training algorithm is based on the standard
+ Q-learning algorithm, our algorithm differs in the following
+ ways. Unlike the standard Q-learning algorithm, our algo
+rithm needs information about the previous action to calcu
+late the current reward. Reward rc
+ t is calculated as below.
+ Superscript c and subscript t are added in (3) and denote
+ company c and time t , respectively.
+ rc
+ t = ac
+ t Lc
+ t P ac
+ t ac
+ t 1
+ (3)
+ where rc
+ t, Lc
+ t and ac
+ t are reward, next day return, and action
+ of company c at time t, respectively. Scalar value Lc
+ t in (3)
+ and that in (1) are exactly the same term. Also, P denotes
+ the transaction penalty. Our model assigns a value of 1, 0 or-1 to ac
+ t for Long, Neutral, or Short actions respectively, for
+ company c at time t. Thus, we can interpret the first term on
+ the right side of (3) as the earned profit by choosing action
+ given state. The second term on the right side of (3) refers
+ to transaction costs when the model changes position at time
+ t. Without some penalty, the model could change positions
+ too frequently, which would incur high transaction costs in
+ real practice. Equation 3 indicates the model needs to know
+ the previous action ac
+ t 1 to calculate the current reward.
+ The previous action ac
+ t 1 given the previous state is also
+ chosen by implementing the-greedy policy. Unlike in the
+ standard Q-learning method, in our method, the next state is
+ not affected by the current action. Thus, when performing
+ experience replay, our training algorithm needs to obtain the
+ previous state and implement the-greedy policy to obtain
+ the previous action.
+ Next, we modified the experience replay introduced in the
+ previous work. First, our model not only samples random
+ batches from the memory buffer to take a gradient step on the
+ loss function but it also randomly generates an experience at
+ every iteration to store it in the memory buffer. Second, our
+ model updates parameters every B iteration, and not every
+ iteration like the original version. In other words, our model
+ stores an experience in the memory buffer at every iteration,
+ updates the network parameters at every B iteration by
+ taking a gradient step on the loss function, and updates the
+ target network parameters 
+at every B C iteration by
+ copying to .Wemodified the original version of experi
+ence replay to prevent our model from updating parameters 
+for too many iterations with experiences generated from only
+ a few companies. As mentioned earlier, we use 80% of our
+ entire training set to actually train our model; our training set
+ contains data on approximately 1500 companies, which was
+ collected over 1000 days (total 1,500,000). The original
+ version of experience replay generates experiences and stores
+ them in the memory buffer by the order of input sequence
+ (one company at a time). Assuming that the size of the
+ memory buffer is 1000, the memory buffer has experiences
+ from only one or two companies over the entire training
+ period. It will take approximately 1000 iterations to observe
+ an experience generated from a new company. Randomly
+ generating experiences and taking a gradient step at every
+ Biteration are done to help our model use many experiences
+ uniformly generated from the entire training set.
+ The training algorithm generates experience eb at b th iter
+ation and stores it in the memory buffer. Experience is simply
+ a tuple of the current state, action, reward, and subsequent
+ state, i.e., (S, A, R and S). The algorithm first randomly
+ selects a data index (c and t) from the training set. Next,
+ the-greedy policy (either randomly selects an action with
+ probability or acts greedily) is used as the behavior policy
+ on state sc
+ t 1 and sc
+ t to obtain the previous action ac
+ t 1
+ and the current action ac
+ t. When implementing the behavior
+ policy, value is initialized to 1 and gradually decremented
+ until it reaches the minimum value m. Rewards are calcu
+lated based on previous and current actions and Lc
+ t, then the
+ tuple (S, A, R and S) is assigned to experience eb. The
+ experience eb is stored in the memory buffer. At every B
+ iteration, the minibatch of size is randomly sampled from
+ the memory buffer and used to calculate Loss. A gradient
+ step is taken to minimize Loss with respect to parameters .
+ The target network parameters 
+are updated every B C
+ iteration. The full training algorithm is stated in Algorithm 1.
+ Also, the list of hyperparameters mentioned in this paper i
+ 
+  the following two methods of DQN: experience replay and
+ parameter freezing. Our loss function is defined in (2). We
+ use the Adam optimizer [37] to perform a gradient step on
+ Loss( ) with respect to parameters . For better under
+standing, the batch size is omitted in (2) so the loss function
+ can beinterpreted as loss calculated from a single experience.
+ Loss( ) = [r +max
+ a
+ Q(s a; ) Q(sa; )]2 (2)
+ where s, a, r, s, and a refer to current state, action, reward,
+ subsequent state, and subsequent action, respectively, and 
+denotes the discount factor. New symbols are used to main
+tain consistency with the standard Q-learning algorithm used
+ in previous works. In Fig. 1, input chart and output action
+ at time t correspond to state s and action a, respectively.
+ Likewise, input chart and output action at time t + 1 also
+ refer to subsequent state s and action a, respectively. As
+ mentioned earlier, output in Fig. 1, which is the output of
+ our CNN, is the action value vector of each element which
+ corresponds to each Long, Neutral, or Short action. The term
+ Q(sa; ) is a scalar value that represents the action value
+ of action a given state s using our CNN parameterized by
+ . Thus, given state s, if action a is Short, then Q(sa; )
+ exactly corresponds to output [3] from our CNN parameter
+ized by .Here, the network parameters and target network
+ parameters 
+are maintained throughout the training process
+ to implement the parameter freezing method. Both and 
+are randomly initialized with the same value in the beginning
+ of the training stage. In the original version of the parameter
+ freezing method, the optimizer performs a gradient step on
+ Loss( ) with respect to the network parameters at every
+ iteration, and no gradient step is performed with respect to the
+ target network parameters . Target network parameters 
+are only updated at every C iteration by copying parameters
+ to 
+.
+ Although our training algorithm is based on the standard
+ Q-learning algorithm, our algorithm differs in the following
+ ways. Unlike the standard Q-learning algorithm, our algo
+rithm needs information about the previous action to calcu
+late the current reward. Reward rc
+ t is calculated as below.
+ Superscript c and subscript t are added in (3) and denote
+ company c and time t , respectively.
+ rc
+ t = ac
+ t Lc
+ t P ac
+ t ac
+ t 1
+ (3)
+ where rc
+ t, Lc
+ t and ac
+ t are reward, next day return, and action
+ of company c at time t, respectively. Scalar value Lc
+ t in (3)
+ and that in (1) are exactly the same term. Also, P denotes
+ the transaction penalty. Our model assigns a value of 1, 0 or-1 to ac
+ t for Long, Neutral, or Short actions respectively, for
+ company c at time t. Thus, we can interpret the first term on
+ the right side of (3) as the earned profit by choosing action
+ given state. The second term on the right side of (3) refers
+ to transaction costs when the model changes position at time
+ t. Without some penalty, the model could change positions
+ too frequently, which would incur high transaction costs in
+ real practice. Equation 3 indicates the model needs to know
+ the previous action ac
+ t 1 to calculate the current reward.
+ The previous action ac
+ t 1 given the previous state is also
+ chosen by implementing the-greedy policy. Unlike in the
+ standard Q-learning method, in our method, the next state is
+ not affected by the current action. Thus, when performing
+ experience replay, our training algorithm needs to obtain the
+ previous state and implement the-greedy policy to obtain
+ the previous action.
+ Next, we modified the experience replay introduced in the
+ previous work. First, our model not only samples random
+ batches from the memory buffer to take a gradient step on the
+ loss function but it also randomly generates an experience at
+ every iteration to store it in the memory buffer. Second, our
+ model updates parameters every B iteration, and not every
+ iteration like the original version. In other words, our model
+ stores an experience in the memory buffer at every iteration,
+ updates the network parameters at every B iteration by
+ taking a gradient step on the loss function, and updates the
+ target network parameters 
+at every B C iteration by
+ copying to .Wemodified the original version of experi
+ence replay to prevent our model from updating parameters 
+for too many iterations with experiences generated from only
+ a few companies. As mentioned earlier, we use 80% of our
+ entire training set to actually train our model; our training set
+ contains data on approximately 1500 companies, which was
+ collected over 1000 days (total 1,500,000). The original
+ version of experience replay generates experiences and stores
+ them in the memory buffer by the order of input sequence
+ (one company at a time). Assuming that the size of the
+ memory buffer is 1000, the memory buffer has experiences
+ from only one or two companies over the entire training
+ period. It will take approximately 1000 iterations to observe
+ an experience generated from a new company. Randomly
+ generating experiences and taking a gradient step at every
+ Biteration are done to help our model use many experiences
+ uniformly generated from the entire training set.
+ The training algorithm generates experience eb at b th iter
+ation and stores it in the memory buffer. Experience is simply
+ a tuple of the current state, action, reward, and subsequent
+ state, i.e., (S, A, R and S). The algorithm first randomly
+ selects a data index (c and t) from the training set. Next,
+ the-greedy policy (either randomly selects an action with
+ probability or acts greedily) is used as the behavior policy
+ on state sc
+ t 1 and sc
+ t to obtain the previous action ac
+ t 1
+ and the current action ac
+ t. When implementing the behavior
+ policy, value is initialized to 1 and gradually decremented
+ until it reaches the minimum value m. Rewards are calcu
+lated based on previous and current actions and Lc
+ t, then the
+ tuple (S, A, R and S) is assigned to experience eb. The
+ experience eb is stored in the memory buffer. At every B
+ iteration, the minibatch of size is randomly sampled from
+ the memory buffer and used to calculate Loss. A gradient
+ step is taken to minimize Loss with respect to parameters .
+ The target network parameters 
+are updated every B C
+ iteration. The full training algorithm is stated in Algorithm 1.
+ Also, the list of hyperparameters mentioned in this paper i
+ 
+  isLongorwhen thenext day’s return isnegativeand the
+ currentactionisShort,theactionisconsideredcorrect.Then
+ thepredictionaccuracyiscalculatedbydividingthenumber
+ ofcorrectactionsbythetotalnumberofcorrectandwrong
+ actions.TheresultsareprovidedinthecolumnAccofTable
+ 3.As the results show, thepredictionaccuracy is slightly
+ higherthan0.5inmostcases,evenwhentheportfolioyields
+ aconsiderablyhighannualreturn.Theseresultsindicatethat
+ ourmodel focusesonthepatterns thatyieldrelativelyhigh
+ rewards,ratherthanonallinputpatternsthatyieldrelatively
+ lowrewards.
+ Algorithm2Marketneutralportfolio
+ 1: Initialize n 0
+ 2: forall cdo
+ 3: if c[1]==1then
+ 4: n[c] 1
+ 5: elseif c[3]==1 then
+ 6: n[c]-1
+ 7: endif
+ 8: endfor
+ 9: n 1
+ N
+ N
+ c=1 n[c]
+ 10: n[c] n[c]-nforallc
+ 11: n
+ N
+ c=1 n[c]
+ 12: n[c] n[c]/ nforallc
+ 
