@@ -123,9 +123,13 @@ class trainModel:
                 S,A,Y   = memory.get_Batch(sessT, rho_eta, state, isTrain,  self.Beta, NumAction, Gamma)
                 Opts    = sess.run(Loss_Tuple, feed_dict = {state:S, isTrain:True, Action:A, Target:Y})
 
-                #2.3: print Loss 
+                #2.3: print Loss and action distribution
                 if(b % (100 * self.B) == 0):
-                    print('Loss: ' ,b, Opts[0]) 
+                    actions = np.argmax(A, axis=1)
+                    sell = np.sum(actions == 0)
+                    hold = np.sum(actions == 1)
+                    buy = np.sum(actions == 2)
+                    print(f'Loss: {b} {Opts[0]:.4f}  Actions: S={sell} H={hold} B={buy}')
 
             #3: update iteration counter
             b   = b + 1

@@ -173,6 +173,11 @@ def run_trading_system(
 
     print("\nRunning predictions...")
 
+    # Debug: check Q-values for first sample
+    test_img = np.array(XData[0][0]).reshape(1, W, W)
+    rho_test, _ = sess.run(rho_eta, feed_dict={state: test_img, isTrain: False})
+    print(f"Sample Q-values: Sell={rho_test[0][0]:.4f} Hold={rho_test[0][1]:.4f} Buy={rho_test[0][2]:.4f}")
+
     # Process day by day, averaging across stocks
     daily_strategy_returns = []
     daily_buyhold_returns = []
@@ -265,4 +270,10 @@ def _seed_everything():
 
 
 if __name__ == "__main__":
-    run_trading_system()
+    # Test on training data
+    TRAIN_TICKERS = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA", "JPM", "V", "JNJ", "WMT"]
+    run_trading_system(
+        tickers=TRAIN_TICKERS,
+        start_date="2017-01-01",
+        end_date="2018-12-31",
+    )
