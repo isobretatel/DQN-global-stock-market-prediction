@@ -226,8 +226,9 @@ class StockDataFetcher:
             delta = df["Close"].diff()
             gain = (delta.where(delta > 0, 0)).rolling(window=rsi_period, min_periods=1).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=rsi_period, min_periods=1).mean()
-            rs = gain / loss.replace(0, pd.NA)
-            df["RSI"] = (100 - (100 / (1 + rs))).fillna(50).astype(float)
+            rs = gain / loss.replace(0, np.nan)
+            rsi = 100 - (100 / (1 + rs))
+            df["RSI"] = np.where(np.isnan(rsi), 50.0, rsi)
 
             # ADX (Average Directional Index)
             adx_period = getattr(config, "ADX_PERIOD", 14)
